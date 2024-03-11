@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro da melhor loja</title>
+    <link rel="stylesheet" href="estilo.css">
+    <script type="text/javascript" src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+    <script>
+        Parse.initialize(
+            'QfVVsPWxqKZIbMJNwSptvZ3RbVhRChC5kpOLfDj1',
+            'v435Qs1T5vlbUpIZROSH0656JkHvWQOlQqHF2fjt'
+        );
+        Parse.serverURL = 'https://parseapi.back4app.com';
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Produtos</h1>
+        <form id="product-form">
+            <label for="name">Nome:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="quant">Quantidade:</label>
+            <input type="number" id="quant" name="quant" required>
+            <label for="valor">Valor:</label>
+            <input type="number" id="valor" name="valor" required>
+            <button type="submit">Adicionar Produto</button>
+        </form>
+        <h2>Produtos já cadastrados</h2>
+        <table id="product-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Quant</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody id="el_dados">
+                
+            </tbody>
+        </table>
+    </div>
+    <script>
+
+        const linha = (nome, quant, valor)=>{
+            return `<tr><td>${nome}</td><td>${quant}</td><td>R$ ${valor}</td></tr>`;
+        }
+
+        const inserirDadosNaTabela = (linhas)=>{
+            let el_dados = document.getElementById("el_dados");
+            el_dados.innerHTML = linhas;
+        }
+       
+        const listarprodutos = async ()=>{
+            const produtos = Parse.Object.extend('produtos');
+            const query = new Parse.Query(produtos);           
+            try {
+                const produtos = await query.find();
+                let linhas = "";
+                for (const produto of produtos) {
+                    const nome = produto.get('nome');
+                    const quant = produto.get('quant');
+                    const valor = produto.get('valor');
+                    linhas += linha(nome,quant,valor);                   
+                }
+                inserirDadosNaTabela(linhas);
+            } catch (error) {
+                console.error('Erro ao consultar API:', error);
+            }
+        }
+
+        const adicionarProduto = async (event) => {
+            event.preventDefault();
+            const nome = document.getElementById('name').value;
+            const quant = parseInt(document.getElementById('quant').value);
+            const valor = parseFloat(document.getElementById('valor').value);
+
+            const Produto = Parse.Object.extend('produtos');
+            const novoProduto = new Produto();
+            novoProduto.set('nome', nome);
+            novoProduto.set('quant', quant);
+            novoProduto.set('valor', valor);
+
+            try {
+                await novoProduto.save();
+                alert('Produto adicionado com sucesso!');
+                listarprodutos();
+                document.getElementById('product-form').reset(); 
+            } catch (error) {
+                console.error('Erro ao adicionar produto:', error);
+                alert('Erro ao adicionar produto. Verifique o console para mais detalhes.');
+            }
+        }
+
+        window.onload = () => {
+            listarprodutos();
+            document.getElementById('product-form').addEventListener('submit', adicionarProduto);
+        };
+    </script>
+</body>
+</html>
